@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "AI Box Catalog",
+    "slug": "ai-box-catalog",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "aiboxcatalog",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "platforms": ["android", "ios"],
+    "android": {
+      "package": "com.aiboxcatalog.app"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

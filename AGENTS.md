@@ -2,14 +2,15 @@
 
 ## Project Structure & Module Organization
 
-This repository currently contains planning documents for **AI Box Catalog**.
+This repository contains planning documents and the initial Expo scaffold for
+**AI Box Catalog**.
 
 - `docs/android-mvp-plan.md` is the implementation source of truth.
 - `docs/ai-box-catalog-design.md` captures product intent and MVP behavior.
 - `docs/test-plan.md` defines critical QA and eval scenarios.
 - `docs/engineering-plan.md` is superseded for implementation and kept for history.
 
-When the app scaffold is added, use this shape:
+Use this shape for implementation:
 
 - `app/` for Expo routes and screens.
 - `src/domain/` for pure TypeScript business logic.
@@ -19,15 +20,11 @@ When the app scaffold is added, use this shape:
 
 ## Build, Test, and Development Commands
 
-No app scaffold exists yet. After Expo initialization, expected commands are:
-
 - `npm install` installs dependencies.
 - `npm run dev` starts Expo locally.
 - `npm test` runs Vitest unit tests.
 - `npm run test:e2e` runs Maestro Android flows.
 - `npm run typecheck` validates TypeScript.
-
-Update this section when package scripts are created.
 
 ## Coding Style & Naming Conventions
 

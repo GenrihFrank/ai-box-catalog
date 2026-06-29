@@ -4,6 +4,7 @@ Generated on 2026-06-29
 Status: APPROVED
 Primary target: Android
 Future target: iOS
+Architecture reference: [architecture.md](./architecture.md)
 
 ## Summary
 
