@@ -1,4 +1,5 @@
 import type { Box, BoxRepository, CreateBoxInput } from '../../domain/boxes';
+import type { SqliteDatabase } from '../SqliteDatabase';
 
 type BoxRow = {
   id: string;
@@ -8,14 +9,8 @@ type BoxRow = {
   updated_at: string;
 };
 
-export type SqliteBoxDatabase = {
-  runAsync(sql: string, ...params: unknown[]): Promise<unknown>;
-  getFirstAsync<T>(sql: string, ...params: unknown[]): Promise<T | null>;
-  getAllAsync<T>(sql: string, ...params: unknown[]): Promise<T[]>;
-};
-
 export class SqliteBoxRepository implements BoxRepository {
-  constructor(private readonly db: SqliteBoxDatabase) {}
+  constructor(private readonly db: SqliteDatabase) {}
 
   async create(input: CreateBoxInput): Promise<Box> {
     await this.db.runAsync(

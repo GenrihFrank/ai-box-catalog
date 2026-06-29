@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { SqliteBoxRepository, type SqliteBoxDatabase } from '../../src/db';
+import { SqliteBoxRepository, type SqliteDatabase } from '../../src/db';
 
-class FakeSqliteBoxDatabase implements SqliteBoxDatabase {
+class FakeSqliteBoxDatabase implements SqliteDatabase {
   rows: Array<{
     id: string;
     number: number;
