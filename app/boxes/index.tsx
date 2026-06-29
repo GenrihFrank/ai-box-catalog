@@ -58,6 +58,12 @@ export default function BoxesRoute() {
         </Link>
       </View>
 
+      <Link href="/qr/scan" asChild>
+        <Pressable style={styles.secondaryButton}>
+          <Text style={styles.secondaryButtonText}>Scan QR</Text>
+        </Pressable>
+      </Link>
+
       {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
 
       <View style={styles.searchBox}>
@@ -179,6 +185,19 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     color: '#fff',
+    fontSize: 16,
+    fontWeight: '700'
+  },
+  secondaryButton: {
+    alignItems: 'center',
+    borderColor: '#0b57d0',
+    borderRadius: 8,
+    borderWidth: 1,
+    minHeight: 44,
+    justifyContent: 'center'
+  },
+  secondaryButtonText: {
+    color: '#0b57d0',
     fontSize: 16,
     fontWeight: '700'
   },

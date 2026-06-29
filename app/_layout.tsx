@@ -14,6 +14,7 @@ export default function RootLayout() {
         <Stack.Screen name="boxes/[boxId]/index" options={{ title: 'Box' }} />
         <Stack.Screen name="boxes/[boxId]/photos" options={{ title: 'Photos' }} />
         <Stack.Screen name="boxes/[boxId]/review/[jobId]" options={{ title: 'Review' }} />
+        <Stack.Screen name="qr/scan" options={{ title: 'Scan QR' }} />
         <Stack.Screen name="qr/[boxId]" options={{ title: 'QR' }} />
       </Stack>
       <StatusBar style="auto" />

@@ -1,1 +1,1 @@
-export { createBoxQrPayload } from './createQrPayload';
+export { createBoxQrPayload, parseBoxQrPayload } from './createQrPayload';
