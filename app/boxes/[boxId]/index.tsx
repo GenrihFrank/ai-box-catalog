@@ -1,17 +1,25 @@
 import { Link, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
-import { SqliteBoxRepository, SqliteItemRepository } from '../../../src/db';
-import { addManualItem, createBoxQrPayload, deleteItem, type Box, type Item } from '../../../src/domain';
+import { SqliteBoxPhotoRepository, SqliteBoxRepository, SqliteItemRepository } from '../../../src/db';
+import {
+  addManualItem,
+  createBoxQrPayload,
+  deleteItem,
+  type Box,
+  type BoxPhoto,
+  type Item
+} from '../../../src/domain';
 
 export default function BoxRoute() {
   const db = useSQLiteContext();
   const { boxId } = useLocalSearchParams<{ boxId: string }>();
   const [box, setBox] = useState<Box | null>(null);
   const [items, setItems] = useState<Item[]>([]);
+  const [photos, setPhotos] = useState<BoxPhoto[]>([]);
   const [newItemName, setNewItemName] = useState('');
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSavingItem, setIsSavingItem] = useState(false);
@@ -20,17 +28,20 @@ export default function BoxRoute() {
   const loadBoxData = useCallback(async () => {
     const boxRepository = new SqliteBoxRepository(db);
     const itemRepository = new SqliteItemRepository(db);
-    const [loadedBox, loadedItems] = await Promise.all([
+    const photoRepository = new SqliteBoxPhotoRepository(db);
+    const [loadedBox, loadedItems, loadedPhotos] = await Promise.all([
       boxRepository.findById(boxId),
-      itemRepository.listByBoxId(boxId)
+      itemRepository.listByBoxId(boxId),
+      photoRepository.listByBoxId(boxId)
     ]);
 
-    return { loadedBox, loadedItems };
+    return { loadedBox, loadedItems, loadedPhotos };
   }, [boxId, db]);
 
-  function applyLoadedBox(loadedBox: Box | null, loadedItems: Item[]) {
+  function applyLoadedBox(loadedBox: Box | null, loadedItems: Item[], loadedPhotos: BoxPhoto[]) {
     setBox(loadedBox);
     setItems(loadedItems);
+    setPhotos(loadedPhotos);
     setErrorMessage(null);
     setIsLoaded(true);
   }
@@ -40,9 +51,9 @@ export default function BoxRoute() {
       let isActive = true;
 
       loadBoxData()
-        .then(({ loadedBox, loadedItems }) => {
+        .then(({ loadedBox, loadedItems, loadedPhotos }) => {
           if (isActive) {
-            applyLoadedBox(loadedBox, loadedItems);
+            applyLoadedBox(loadedBox, loadedItems, loadedPhotos);
           }
         })
         .catch((error: unknown) => {
@@ -72,8 +83,8 @@ export default function BoxRoute() {
         { itemRepository: new SqliteItemRepository(db) }
       );
       setNewItemName('');
-      const { loadedBox, loadedItems } = await loadBoxData();
-      applyLoadedBox(loadedBox, loadedItems);
+      const { loadedBox, loadedItems, loadedPhotos } = await loadBoxData();
+      applyLoadedBox(loadedBox, loadedItems, loadedPhotos);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Failed to add item');
     } finally {
@@ -86,8 +97,8 @@ export default function BoxRoute() {
 
     try {
       await deleteItem({ id: itemId }, { itemRepository: new SqliteItemRepository(db) });
-      const { loadedBox, loadedItems } = await loadBoxData();
-      applyLoadedBox(loadedBox, loadedItems);
+      const { loadedBox, loadedItems, loadedPhotos } = await loadBoxData();
+      applyLoadedBox(loadedBox, loadedItems, loadedPhotos);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Failed to delete item');
     }
@@ -117,6 +128,26 @@ export default function BoxRoute() {
           <View style={styles.qrBlock}>
             <QRCode value={createBoxQrPayload(box.id)} size={160} />
             <Text style={styles.meta}>{createBoxQrPayload(box.id)}</Text>
+          </View>
+
+          <View style={styles.photosBlock}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Photos</Text>
+              <Link href={{ pathname: '/boxes/[boxId]/photos', params: { boxId: box.id } }} asChild>
+                <Pressable accessibilityRole="button">
+                  <Text style={styles.linkText}>{photos.length === 0 ? 'Add photos' : 'Manage'}</Text>
+                </Pressable>
+              </Link>
+            </View>
+            {photos.length === 0 ? (
+              <Text style={styles.body}>No photos yet.</Text>
+            ) : (
+              <View style={styles.photoPreviewList}>
+                {photos.slice(0, 3).map((photo) => (
+                  <Image key={photo.id} source={{ uri: photo.thumbnailUri }} style={styles.photoPreview} />
+                ))}
+              </View>
+            )}
           </View>
 
           <View style={styles.addItemForm}>
@@ -180,6 +211,37 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: 10,
     padding: 16
+  },
+  photosBlock: {
+    borderColor: '#d7dce2',
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 10,
+    padding: 14
+  },
+  sectionHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between'
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700'
+  },
+  linkText: {
+    color: '#0b57d0',
+    fontSize: 14,
+    fontWeight: '700'
+  },
+  photoPreviewList: {
+    flexDirection: 'row',
+    gap: 8
+  },
+  photoPreview: {
+    aspectRatio: 1,
+    backgroundColor: '#eef2f6',
+    borderRadius: 6,
+    width: 84
   },
   link: {
     color: '#0b57d0',

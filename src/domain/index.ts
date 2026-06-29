@@ -30,6 +30,13 @@ export {
   type ItemRepository,
   type ItemSource
 } from './items';
-export type { BoxPhoto, BoxPhotoRepository, CreateBoxPhotoInput } from './photos';
+export {
+  addBoxPhoto,
+  type AddBoxPhotoCommand,
+  type AddBoxPhotoDeps,
+  type BoxPhoto,
+  type BoxPhotoRepository,
+  type CreateBoxPhotoInput
+} from './photos';
 export { createBoxQrPayload, parseBoxQrPayload } from './qr';
 export { searchItems, type SearchMatchedItem, type SearchResult } from './search';
