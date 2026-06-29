@@ -49,5 +49,5 @@ function defaultNow(): string {
 }
 
 function defaultCreateId(): string {
-  return globalThis.crypto.randomUUID();
+  return globalThis.crypto?.randomUUID?.() ?? `box-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
