@@ -1,0 +1,1 @@
+export { createBoxQrPayload } from './createQrPayload';

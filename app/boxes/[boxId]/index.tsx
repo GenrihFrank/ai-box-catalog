@@ -2,9 +2,10 @@ import { Link, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import QRCode from 'react-native-qrcode-svg';
 
 import { SqliteBoxRepository, SqliteItemRepository } from '../../../src/db';
-import { addManualItem, deleteItem, type Box, type Item } from '../../../src/domain';
+import { addManualItem, createBoxQrPayload, deleteItem, type Box, type Item } from '../../../src/domain';
 
 export default function BoxRoute() {
   const db = useSQLiteContext();
@@ -113,6 +114,11 @@ export default function BoxRoute() {
           {box.label ? <Text style={styles.body}>{box.label}</Text> : null}
           <Text style={styles.meta}>Stable ID: {box.id}</Text>
 
+          <View style={styles.qrBlock}>
+            <QRCode value={createBoxQrPayload(box.id)} size={160} />
+            <Text style={styles.meta}>{createBoxQrPayload(box.id)}</Text>
+          </View>
+
           <View style={styles.addItemForm}>
             <TextInput
               value={newItemName}
@@ -166,6 +172,14 @@ const styles = StyleSheet.create({
   meta: {
     color: '#4b5563',
     fontSize: 13
+  },
+  qrBlock: {
+    alignItems: 'center',
+    borderColor: '#d7dce2',
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 10,
+    padding: 16
   },
   link: {
     color: '#0b57d0',
