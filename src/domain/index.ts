@@ -31,3 +31,4 @@ export {
   type ItemSource
 } from './items';
 export type { BoxPhoto, BoxPhotoRepository, CreateBoxPhotoInput } from './photos';
+export { searchItems, type SearchMatchedItem, type SearchResult } from './search';

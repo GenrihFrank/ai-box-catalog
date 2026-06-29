@@ -1,26 +1,32 @@
 import { Link, useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { SqliteBoxRepository } from '../../src/db';
-import type { Box } from '../../src/domain';
+import { SqliteBoxRepository, SqliteItemRepository } from '../../src/db';
+import { searchItems, type Box, type Item, type SearchResult } from '../../src/domain';
 
 export default function BoxesRoute() {
   const db = useSQLiteContext();
   const [boxes, setBoxes] = useState<Box[]>([]);
+  const [items, setItems] = useState<Item[]>([]);
+  const [query, setQuery] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const trimmedQuery = query.trim();
+  const searchResults = trimmedQuery ? searchItems(trimmedQuery, items) : [];
+  const boxesById = new Map(boxes.map((box) => [box.id, box]));
 
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
-      const repository = new SqliteBoxRepository(db);
+      const boxRepository = new SqliteBoxRepository(db);
+      const itemRepository = new SqliteItemRepository(db);
 
-      repository
-        .list()
-        .then((loadedBoxes) => {
+      Promise.all([boxRepository.list(), itemRepository.listConfirmed()])
+        .then(([loadedBoxes, loadedItems]) => {
           if (isActive) {
             setBoxes(loadedBoxes);
+            setItems(loadedItems);
             setErrorMessage(null);
           }
         })
@@ -54,27 +60,83 @@ export default function BoxesRoute() {
 
       {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
 
-      <View style={styles.list}>
-        {boxes.map((box) => (
-          <Link key={box.id} href={{ pathname: '/boxes/[boxId]', params: { boxId: box.id } }} asChild>
-            <Pressable style={styles.boxRow}>
-              <View>
-                <Text style={styles.boxTitle}>Box {box.number}</Text>
-                {box.label ? <Text style={styles.boxLabel}>{box.label}</Text> : null}
-              </View>
-              <Text style={styles.chevron}>Open</Text>
-            </Pressable>
-          </Link>
-        ))}
+      <View style={styles.searchBox}>
+        <TextInput
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Search items"
+          style={styles.input}
+          returnKeyType="search"
+        />
       </View>
 
-      {boxes.length === 0 ? (
+      {trimmedQuery ? (
+        <SearchResults results={searchResults} boxesById={boxesById} />
+      ) : (
+        <View style={styles.list}>
+          {boxes.map((box) => (
+            <BoxRow key={box.id} box={box} />
+          ))}
+        </View>
+      )}
+
+      {!trimmedQuery && boxes.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyTitle}>No boxes yet</Text>
           <Text style={styles.body}>Create the first box to start the catalog.</Text>
         </View>
       ) : null}
     </ScrollView>
+  );
+}
+
+function SearchResults({ results, boxesById }: { results: SearchResult[]; boxesById: Map<string, Box> }) {
+  if (results.length === 0) {
+    return (
+      <View style={styles.emptyState}>
+        <Text style={styles.emptyTitle}>No confirmed item found</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.list}>
+      {results.map((result) => {
+        const box = boxesById.get(result.boxId);
+
+        if (!box) {
+          return null;
+        }
+
+        return (
+          <Link key={result.boxId} href={{ pathname: '/boxes/[boxId]', params: { boxId: result.boxId } }} asChild>
+            <Pressable style={styles.boxRow}>
+              <View style={styles.searchResultText}>
+                <Text style={styles.boxTitle}>Box {box.number}</Text>
+                <Text style={styles.boxLabel}>
+                  {result.matchedItems.map((item) => item.name).join(', ')}
+                </Text>
+              </View>
+              <Text style={styles.chevron}>Open</Text>
+            </Pressable>
+          </Link>
+        );
+      })}
+    </View>
+  );
+}
+
+function BoxRow({ box }: { box: Box }) {
+  return (
+    <Link href={{ pathname: '/boxes/[boxId]', params: { boxId: box.id } }} asChild>
+      <Pressable style={styles.boxRow}>
+        <View>
+          <Text style={styles.boxTitle}>Box {box.number}</Text>
+          {box.label ? <Text style={styles.boxLabel}>{box.label}</Text> : null}
+        </View>
+        <Text style={styles.chevron}>Open</Text>
+      </Pressable>
+    </Link>
   );
 }
 
@@ -95,6 +157,17 @@ const styles = StyleSheet.create({
   },
   body: {
     fontSize: 16
+  },
+  searchBox: {
+    gap: 6
+  },
+  input: {
+    borderColor: '#c7cdd4',
+    borderRadius: 8,
+    borderWidth: 1,
+    fontSize: 16,
+    minHeight: 48,
+    paddingHorizontal: 12
   },
   primaryButton: {
     alignItems: 'center',
@@ -130,6 +203,10 @@ const styles = StyleSheet.create({
     color: '#4b5563',
     fontSize: 14,
     marginTop: 4
+  },
+  searchResultText: {
+    flex: 1,
+    gap: 4
   },
   chevron: {
     color: '#0b57d0',
