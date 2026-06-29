@@ -20,11 +20,11 @@ Use this shape for implementation:
 
 ## Build, Test, and Development Commands
 
-- `npm install` installs dependencies.
-- `npm run dev` starts Expo locally.
-- `npm test` runs Vitest unit tests.
-- `npm run test:e2e` runs Maestro Android flows.
-- `npm run typecheck` validates TypeScript.
+- `pnpm install` installs dependencies.
+- `pnpm dev` starts Expo locally.
+- `pnpm test` runs Vitest unit tests.
+- `pnpm test:e2e` runs Maestro Android flows.
+- `pnpm typecheck` validates TypeScript.
 
 ## Coding Style & Naming Conventions
 
@@ -50,7 +50,7 @@ Use descriptive test names: `creates box with stable id`, `rejects photos from d
 
 ## Commit & Pull Request Guidelines
 
-This repository has no commit history yet. Use short Russian commit messages with:
+Use short Russian commit messages with:
 
 - `[+]` for additions.
 - `[-]` for removals.
