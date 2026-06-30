@@ -154,6 +154,65 @@ describe('startExtractionJob', () => {
     ]);
   });
 
+  it('passes extraction photo payloads to adapter', async () => {
+    const requests: unknown[] = [];
+
+    await startExtractionJob(
+      {
+        boxId: 'box-1',
+        photoIds: ['photo-1'],
+        photos: [
+          {
+            id: 'photo-1',
+            mimeType: 'image/jpeg',
+            dataBase64: 'base64-photo-1',
+            width: 1280,
+            height: 960,
+            byteSize: 120000
+          }
+        ],
+        mode: 'local-desktop-vlm'
+      },
+      {
+        boxPhotoRepository: new FakeBoxPhotoRepository([createPhoto('photo-1', 'box-1')]),
+        extractionJobRepository: new FakeExtractionJobRepository(),
+        extractItemsFromPhotos: async (request) => {
+          requests.push(request);
+          return {
+            suggestions: [
+              {
+                id: 'suggestion-1',
+                name: 'black gloves',
+                sourcePhotoIds: ['photo-1'],
+                selectedByDefault: true
+              }
+            ]
+          };
+        },
+        createId: () => 'job-1',
+        now: () => '2026-06-30T10:00:00.000Z'
+      }
+    );
+
+    expect(requests).toEqual([
+      {
+        boxId: 'box-1',
+        photoIds: ['photo-1'],
+        photos: [
+          {
+            id: 'photo-1',
+            mimeType: 'image/jpeg',
+            dataBase64: 'base64-photo-1',
+            width: 1280,
+            height: 960,
+            byteSize: 120000
+          }
+        ],
+        mode: 'local-desktop-vlm'
+      }
+    ]);
+  });
+
   it('rejects extraction when photos belong to different boxes', async () => {
     const jobRepository = new FakeExtractionJobRepository();
     let adapterCalled = false;

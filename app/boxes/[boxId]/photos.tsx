@@ -18,6 +18,7 @@ import {
   type ExtractItemsFromPhotos
 } from '../../../src/domain';
 import { createBackendExtractItemsFromPhotos } from '../../../src/services/extraction/backendExtractItemsFromPhotos';
+import { createExtractionPhotoPayloads } from '../../../src/services/extraction/createExtractionPhotoPayloads';
 import { mockExtractItemsFromPhotos } from '../../../src/services/extraction/mockExtractItemsFromPhotos';
 import { prepareBoxPhotoAsset } from '../../../src/services/photos/prepareBoxPhotoAsset';
 
@@ -191,10 +192,13 @@ export default function BoxPhotosRoute() {
     setErrorMessage(null);
 
     try {
+      const extractionPhotos =
+        mode === 'local-desktop-vlm' ? await createExtractionPhotoPayloads(photos) : undefined;
       const job = await startExtractionJob(
         {
           boxId,
           photoIds: photos.map((photo) => photo.id),
+          photos: extractionPhotos,
           mode
         },
         {

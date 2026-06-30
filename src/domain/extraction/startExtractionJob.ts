@@ -73,6 +73,7 @@ export async function startExtractionJob(
     const response = await deps.extractItemsFromPhotos({
       boxId: command.boxId,
       photoIds,
+      photos: command.photos,
       mode: command.mode
     });
     const updatedAt = (deps.now ?? defaultNow)();

@@ -39,6 +39,12 @@ export function buildServer(config: ServerConfig = {}) {
       });
     }
 
+    if (parsedRequest.data.mode === 'local-desktop-vlm' && !parsedRequest.data.photos?.length) {
+      return reply.status(400).send({
+        error: 'local-desktop-vlm mode requires photos'
+      });
+    }
+
     try {
       const extractItemsFromPhotos =
         parsedRequest.data.mode === 'local-desktop-vlm'

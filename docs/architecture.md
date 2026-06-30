@@ -434,6 +434,14 @@ type ExtractionMode = 'mock' | 'local-desktop-vlm' | 'cloud-vlm';
 type ExtractItemsRequest = {
   boxId: string;
   photoIds: string[];
+  photos?: {
+    id: string;
+    mimeType: 'image/jpeg';
+    dataBase64: string;
+    width: number;
+    height: number;
+    byteSize: number;
+  }[];
   mode: ExtractionMode;
 };
 ```

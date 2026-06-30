@@ -11,10 +11,22 @@ export const itemAttributesSchema = z
   })
   .strict();
 
+export const extractionPhotoPayloadSchema = z
+  .object({
+    id: z.string().min(1),
+    mimeType: z.string().min(1),
+    dataBase64: z.string().min(1),
+    width: z.number().int().positive(),
+    height: z.number().int().positive(),
+    byteSize: z.number().int().nonnegative()
+  })
+  .strict();
+
 export const extractItemsRequestSchema = z
   .object({
     boxId: z.string().min(1),
     photoIds: z.array(z.string().min(1)).min(1),
+    photos: z.array(extractionPhotoPayloadSchema).optional(),
     mode: extractionModeSchema
   })
   .strict();
@@ -37,6 +49,7 @@ export const extractItemsResponseSchema = z
   .strict();
 
 export type ExtractionMode = z.infer<typeof extractionModeSchema>;
+export type ExtractionPhotoPayload = z.infer<typeof extractionPhotoPayloadSchema>;
 export type ExtractItemsRequest = z.infer<typeof extractItemsRequestSchema>;
 export type ExtractedItemSuggestion = z.infer<typeof extractedItemSuggestionSchema>;
 export type ExtractItemsResponse = z.infer<typeof extractItemsResponseSchema>;

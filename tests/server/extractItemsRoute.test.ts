@@ -95,6 +95,16 @@ describe('POST /api/extract-items', () => {
       payload: {
         boxId: 'box-1',
         photoIds: ['photo-1'],
+        photos: [
+          {
+            id: 'photo-1',
+            mimeType: 'image/jpeg',
+            dataBase64: 'base64-photo-1',
+            width: 1280,
+            height: 960,
+            byteSize: 120000
+          }
+        ],
         mode: 'local-desktop-vlm'
       }
     });
@@ -103,6 +113,16 @@ describe('POST /api/extract-items', () => {
       {
         boxId: 'box-1',
         photoIds: ['photo-1'],
+        photos: [
+          {
+            id: 'photo-1',
+            mimeType: 'image/jpeg',
+            dataBase64: 'base64-photo-1',
+            width: 1280,
+            height: 960,
+            byteSize: 120000
+          }
+        ],
         mode: 'local-desktop-vlm'
       }
     ]);
@@ -141,6 +161,16 @@ describe('POST /api/extract-items', () => {
       payload: {
         boxId: 'box-1',
         photoIds: ['photo-1'],
+        photos: [
+          {
+            id: 'photo-1',
+            mimeType: 'image/jpeg',
+            dataBase64: 'base64-photo-1',
+            width: 1280,
+            height: 960,
+            byteSize: 120000
+          }
+        ],
         mode: 'local-desktop-vlm'
       }
     });
@@ -165,6 +195,16 @@ describe('POST /api/extract-items', () => {
       payload: {
         boxId: 'box-1',
         photoIds: ['photo-1'],
+        photos: [
+          {
+            id: 'photo-1',
+            mimeType: 'image/jpeg',
+            dataBase64: 'base64-photo-1',
+            width: 1280,
+            height: 960,
+            byteSize: 120000
+          }
+        ],
         mode: 'local-desktop-vlm'
       }
     });
@@ -172,6 +212,26 @@ describe('POST /api/extract-items', () => {
     expect(response.statusCode).toBe(500);
     expect(response.json()).toMatchObject({
       error: 'local model unavailable'
+    });
+  });
+
+  it('requires photos for configured local desktop VLM mode', async () => {
+    const server = buildServer({
+      localDesktopVlmUrl: 'http://127.0.0.1:8788/extract'
+    });
+    const response = await server.inject({
+      method: 'POST',
+      url: '/api/extract-items',
+      payload: {
+        boxId: 'box-1',
+        photoIds: ['photo-1'],
+        mode: 'local-desktop-vlm'
+      }
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toMatchObject({
+      error: 'local-desktop-vlm mode requires photos'
     });
   });
 

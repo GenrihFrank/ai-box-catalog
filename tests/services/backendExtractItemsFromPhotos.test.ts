@@ -26,7 +26,21 @@ describe('createBackendExtractItemsFromPhotos', () => {
     });
 
     await expect(
-      adapter({ boxId: 'box-1', photoIds: ['photo-1'], mode: 'local-desktop-vlm' })
+      adapter({
+        boxId: 'box-1',
+        photoIds: ['photo-1'],
+        photos: [
+          {
+            id: 'photo-1',
+            mimeType: 'image/jpeg',
+            dataBase64: 'base64-photo-1',
+            width: 1280,
+            height: 960,
+            byteSize: 120000
+          }
+        ],
+        mode: 'local-desktop-vlm'
+      })
     ).resolves.toMatchObject({
       suggestions: [
         {
@@ -42,6 +56,16 @@ describe('createBackendExtractItemsFromPhotos', () => {
     expect(JSON.parse(String(calls[0].init.body))).toEqual({
       boxId: 'box-1',
       photoIds: ['photo-1'],
+      photos: [
+        {
+          id: 'photo-1',
+          mimeType: 'image/jpeg',
+          dataBase64: 'base64-photo-1',
+          width: 1280,
+          height: 960,
+          byteSize: 120000
+        }
+      ],
       mode: 'local-desktop-vlm'
     });
   });

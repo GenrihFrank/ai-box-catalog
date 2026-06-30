@@ -98,6 +98,14 @@ type ExtractionMode = 'mock' | 'local-desktop-vlm' | 'cloud-vlm';
 type ExtractItemsRequest = {
   boxId: string;
   photoIds: string[];
+  photos?: {
+    id: string;
+    mimeType: 'image/jpeg';
+    dataBase64: string;
+    width: number;
+    height: number;
+    byteSize: number;
+  }[];
   mode: ExtractionMode;
 };
 
@@ -117,8 +125,8 @@ type ItemSuggestion = {
 ```
 
 - First adapter: `mock`, for UI and flow development without a model.
-- Second adapter: `local-desktop-vlm`, where the app sends photos to a local backend
-  on the same network.
+- Second adapter: `local-desktop-vlm`, where the app sends compressed JPEG photos
+  as base64 payloads to a local backend on the same network.
 - Keep `cloud-vlm` as an optional quality benchmark only.
 - Validate request and response shapes with Zod.
 
