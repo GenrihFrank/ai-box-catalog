@@ -22,7 +22,8 @@ Use this shape for implementation:
 
 - `pnpm install` installs dependencies.
 - `pnpm dev` starts Expo locally.
-- `pnpm backend:dev` starts the local extraction backend.
+- `pnpm backend:dev` starts the local extraction backend. Set
+  `LOCAL_DESKTOP_VLM_URL` to enable `local-desktop-vlm` proxy mode.
 - `pnpm test` runs Vitest unit tests.
 - `pnpm test:e2e` runs Maestro Android flows.
 - `pnpm typecheck` validates TypeScript.

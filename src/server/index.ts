@@ -3,7 +3,9 @@ import { buildServer } from './buildServer';
 const port = Number(process.env.PORT ?? 8787);
 const host = process.env.HOST ?? '0.0.0.0';
 
-const server = buildServer();
+const server = buildServer({
+  localDesktopVlmUrl: process.env.LOCAL_DESKTOP_VLM_URL
+});
 
 server
   .listen({ host, port })

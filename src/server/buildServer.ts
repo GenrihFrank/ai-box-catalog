@@ -5,9 +5,16 @@ import {
   extractItemsRequestSchema,
   extractItemsResponseSchema
 } from '../shared/extractionContract';
+import { createLocalDesktopVlmExtractItemsFromPhotos } from '../services/extraction/localDesktopVlmExtractItemsFromPhotos';
 import { mockExtractItemsFromPhotos } from '../services/extraction/mockExtractItemsFromPhotos';
+import type { ExtractItemsFromPhotos } from '../domain/extraction';
 
-export function buildServer() {
+export type ServerConfig = {
+  localDesktopVlmUrl?: string;
+  localDesktopVlmExtractItemsFromPhotos?: ExtractItemsFromPhotos;
+};
+
+export function buildServer(config: ServerConfig = {}) {
   const server = Fastify({ logger: false });
 
   server.post('/api/extract-items', async (request, reply) => {
@@ -20,14 +27,27 @@ export function buildServer() {
       });
     }
 
-    if (parsedRequest.data.mode !== 'mock') {
+    if (parsedRequest.data.mode === 'cloud-vlm') {
       return reply.status(501).send({
         error: `Extraction mode ${parsedRequest.data.mode} is not implemented`
       });
     }
 
+    if (parsedRequest.data.mode === 'local-desktop-vlm' && !config.localDesktopVlmUrl) {
+      return reply.status(501).send({
+        error: 'LOCAL_DESKTOP_VLM_URL is required for local-desktop-vlm mode'
+      });
+    }
+
     try {
-      const response = await mockExtractItemsFromPhotos(parsedRequest.data);
+      const extractItemsFromPhotos =
+        parsedRequest.data.mode === 'local-desktop-vlm'
+          ? config.localDesktopVlmExtractItemsFromPhotos ??
+            createLocalDesktopVlmExtractItemsFromPhotos({
+              endpointUrl: config.localDesktopVlmUrl as string
+            })
+          : mockExtractItemsFromPhotos;
+      const response = await extractItemsFromPhotos(parsedRequest.data);
       const parsedResponse = extractItemsResponseSchema.parse(response);
       return reply.send(parsedResponse);
     } catch (error) {
