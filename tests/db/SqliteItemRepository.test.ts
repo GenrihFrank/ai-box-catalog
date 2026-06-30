@@ -59,8 +59,13 @@ class FakeSqliteItemDatabase implements SqliteDatabase {
     return undefined;
   }
 
-  async getFirstAsync<T>(): Promise<T | null> {
-    return null;
+  async getFirstAsync<T>(_sql: string, ...params: unknown[]): Promise<T | null> {
+    const [sourceSuggestionId] = params;
+    return (
+      (this.rows.find(
+        (row) => row.source_suggestion_id === sourceSuggestionId && !row.deleted_at
+      ) as T | undefined) ?? null
+    );
   }
 
   async getAllAsync<T>(_sql: string, ...params: unknown[]): Promise<T[]> {
@@ -111,5 +116,23 @@ describe('SqliteItemRepository', () => {
 
     await expect(repository.listByBoxId('box-1')).resolves.toEqual([]);
     await expect(repository.listConfirmed()).resolves.toEqual([]);
+  });
+
+  it('finds active item by source suggestion id', async () => {
+    const repository = new SqliteItemRepository(new FakeSqliteItemDatabase());
+    await repository.create({
+      id: 'item-1',
+      boxId: 'box-1',
+      name: 'black gloves',
+      source: 'ai_confirmed',
+      sourceSuggestionId: 'suggestion-1',
+      createdAt: '2026-06-29T00:00:00.000Z',
+      updatedAt: '2026-06-29T00:00:00.000Z'
+    });
+
+    await expect(repository.findBySourceSuggestionId('suggestion-1')).resolves.toMatchObject({
+      id: 'item-1',
+      sourceSuggestionId: 'suggestion-1'
+    });
   });
 });

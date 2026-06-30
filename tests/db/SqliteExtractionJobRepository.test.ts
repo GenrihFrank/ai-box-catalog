@@ -91,11 +91,45 @@ class FakeSqliteExtractionDatabase implements SqliteDatabase {
       );
     }
 
+    if (sql.includes("SET status = 'applied'")) {
+      const [updatedAt, id] = params;
+      this.jobs = this.jobs.map((job) =>
+        job.id === id ? { ...job, status: 'applied', updated_at: String(updatedAt) } : job
+      );
+    }
+
+    if (sql.includes("SET name = ?, status = 'edited'")) {
+      const [name, updatedAt, id] = params;
+      this.suggestions = this.suggestions.map((suggestion) =>
+        suggestion.id === id
+          ? { ...suggestion, name: String(name), status: 'edited', updated_at: String(updatedAt) }
+          : suggestion
+      );
+    }
+
+    if (sql.includes("SET status = 'deleted'")) {
+      const [updatedAt, id] = params;
+      this.suggestions = this.suggestions.map((suggestion) =>
+        suggestion.id === id ? { ...suggestion, status: 'deleted', updated_at: String(updatedAt) } : suggestion
+      );
+    }
+
+    if (sql.includes("SET status = 'applied'") && sql.includes('item_suggestions')) {
+      const [updatedAt, id] = params;
+      this.suggestions = this.suggestions.map((suggestion) =>
+        suggestion.id === id ? { ...suggestion, status: 'applied', updated_at: String(updatedAt) } : suggestion
+      );
+    }
+
     return undefined;
   }
 
   async getFirstAsync<T>(_sql: string, ...params: unknown[]): Promise<T | null> {
     const [id] = params;
+    if (_sql.includes('FROM item_suggestions')) {
+      return (this.suggestions.find((suggestion) => suggestion.id === id) as T | undefined) ?? null;
+    }
+
     return (this.jobs.find((job) => job.id === id) as T | undefined) ?? null;
   }
 
@@ -166,6 +200,54 @@ describe('SqliteExtractionJobRepository', () => {
       id: 'job-1',
       status: 'failed',
       errorMessage: 'model timeout'
+    });
+  });
+
+  it('updates suggestion review status', async () => {
+    const repository = new SqliteExtractionJobRepository(new FakeSqliteExtractionDatabase());
+    await repository.saveSuggestions('job-1', [
+      {
+        id: 'suggestion-1',
+        jobId: 'job-1',
+        name: 'black gloves',
+        attributes: {},
+        sourcePhotoIds: ['photo-1'],
+        selectedByDefault: true,
+        status: 'active',
+        createdAt: '2026-06-30T10:00:01.000Z',
+        updatedAt: '2026-06-30T10:00:01.000Z'
+      },
+      {
+        id: 'suggestion-2',
+        jobId: 'job-1',
+        name: 'wrong item',
+        attributes: {},
+        sourcePhotoIds: ['photo-1'],
+        selectedByDefault: true,
+        status: 'active',
+        createdAt: '2026-06-30T10:00:01.000Z',
+        updatedAt: '2026-06-30T10:00:01.000Z'
+      }
+    ]);
+
+    await expect(
+      repository.updateSuggestionName('suggestion-1', 'winter gloves', '2026-06-30T10:00:02.000Z')
+    ).resolves.toMatchObject({
+      id: 'suggestion-1',
+      name: 'winter gloves',
+      status: 'edited'
+    });
+    await expect(
+      repository.markSuggestionDeleted('suggestion-2', '2026-06-30T10:00:03.000Z')
+    ).resolves.toMatchObject({
+      id: 'suggestion-2',
+      status: 'deleted'
+    });
+    await expect(
+      repository.markSuggestionApplied('suggestion-1', '2026-06-30T10:00:04.000Z')
+    ).resolves.toMatchObject({
+      id: 'suggestion-1',
+      status: 'applied'
     });
   });
 });

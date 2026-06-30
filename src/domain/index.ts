@@ -17,11 +17,14 @@ export type {
   ItemSuggestionStatus
 } from './extraction';
 export {
+  applyItemSuggestions,
   EmptyPhotoSelectionError,
   InvalidSuggestionSourcePhotoError,
   MissingBoxPhotoError,
   MixedBoxPhotosError,
   startExtractionJob,
+  type ApplyItemSuggestionsCommand,
+  type ApplyItemSuggestionsDeps,
   type ExtractItemsFromPhotos,
   type StartExtractionJobCommand,
   type StartExtractionJobDeps

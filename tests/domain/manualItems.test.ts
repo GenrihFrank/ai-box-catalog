@@ -37,6 +37,10 @@ class InMemoryItemRepository implements ItemRepository {
     return this.items.filter((item) => !item.deletedAt);
   }
 
+  async findBySourceSuggestionId(sourceSuggestionId: string): Promise<Item | null> {
+    return this.items.find((item) => item.sourceSuggestionId === sourceSuggestionId && !item.deletedAt) ?? null;
+  }
+
   async markDeleted(id: string, deletedAt: string): Promise<void> {
     this.items = this.items.map((item) => (item.id === id ? { ...item, deletedAt } : item));
   }

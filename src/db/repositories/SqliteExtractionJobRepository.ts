@@ -98,6 +98,20 @@ ORDER BY created_at ASC;
     return rows.map(toItemSuggestion);
   }
 
+  async findSuggestionById(id: string): Promise<ItemSuggestion | null> {
+    const row = await this.db.getFirstAsync<ItemSuggestionRow>(
+      `
+SELECT id, job_id, name, attributes_json, source_photo_ids_json, reason,
+  selected_by_default, status, created_at, updated_at
+FROM item_suggestions
+WHERE id = ?;
+`,
+      id
+    );
+
+    return row ? toItemSuggestion(row) : null;
+  }
+
   async saveSuggestions(_jobId: string, suggestions: ItemSuggestion[]): Promise<void> {
     for (const suggestion of suggestions) {
       await this.db.runAsync(
@@ -159,6 +173,63 @@ WHERE id = ?;
     return this.requireJob(id);
   }
 
+  async markApplied(id: string, updatedAt: string): Promise<ExtractionJob> {
+    await this.db.runAsync(
+      `
+UPDATE extraction_jobs
+SET status = 'applied', updated_at = ?
+WHERE id = ?;
+`,
+      updatedAt,
+      id
+    );
+
+    return this.requireJob(id);
+  }
+
+  async updateSuggestionName(id: string, name: string, updatedAt: string): Promise<ItemSuggestion> {
+    await this.db.runAsync(
+      `
+UPDATE item_suggestions
+SET name = ?, status = 'edited', updated_at = ?
+WHERE id = ? AND status IN ('active', 'edited');
+`,
+      name,
+      updatedAt,
+      id
+    );
+
+    return this.requireSuggestion(id);
+  }
+
+  async markSuggestionDeleted(id: string, updatedAt: string): Promise<ItemSuggestion> {
+    await this.db.runAsync(
+      `
+UPDATE item_suggestions
+SET status = 'deleted', updated_at = ?
+WHERE id = ? AND status IN ('active', 'edited');
+`,
+      updatedAt,
+      id
+    );
+
+    return this.requireSuggestion(id);
+  }
+
+  async markSuggestionApplied(id: string, updatedAt: string): Promise<ItemSuggestion> {
+    await this.db.runAsync(
+      `
+UPDATE item_suggestions
+SET status = 'applied', updated_at = ?
+WHERE id = ? AND status IN ('active', 'edited', 'applied');
+`,
+      updatedAt,
+      id
+    );
+
+    return this.requireSuggestion(id);
+  }
+
   private async requireJob(id: string): Promise<ExtractionJob> {
     const job = await this.findById(id);
 
@@ -167,6 +238,16 @@ WHERE id = ?;
     }
 
     return job;
+  }
+
+  private async requireSuggestion(id: string): Promise<ItemSuggestion> {
+    const suggestion = await this.findSuggestionById(id);
+
+    if (!suggestion) {
+      throw new Error(`Item suggestion ${id} does not exist`);
+    }
+
+    return suggestion;
   }
 }
 

@@ -1,3 +1,8 @@
+export {
+  applyItemSuggestions,
+  type ApplyItemSuggestionsCommand,
+  type ApplyItemSuggestionsDeps
+} from './applyItemSuggestions';
 export type {
   ExtractionJob,
   ExtractionJobStatus,

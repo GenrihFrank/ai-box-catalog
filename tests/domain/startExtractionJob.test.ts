@@ -51,6 +51,10 @@ class FakeExtractionJobRepository implements ExtractionJobRepository {
     return this.jobs.find((job) => job.id === id) ?? null;
   }
 
+  async findSuggestionById(id: string) {
+    return this.suggestions.find((suggestion) => suggestion.id === id) ?? null;
+  }
+
   async listSuggestions(jobId: string) {
     return this.suggestions.filter((suggestion) => suggestion.jobId === jobId);
   }
@@ -67,6 +71,22 @@ class FakeExtractionJobRepository implements ExtractionJobRepository {
     return this.updateJob(id, { status: 'failed', errorMessage, updatedAt });
   }
 
+  async markApplied(id: string, updatedAt: string) {
+    return this.updateJob(id, { status: 'applied', updatedAt });
+  }
+
+  async updateSuggestionName(id: string, name: string, updatedAt: string) {
+    return this.updateSuggestion(id, { name, status: 'edited', updatedAt });
+  }
+
+  async markSuggestionDeleted(id: string, updatedAt: string) {
+    return this.updateSuggestion(id, { status: 'deleted', updatedAt });
+  }
+
+  async markSuggestionApplied(id: string, updatedAt: string) {
+    return this.updateSuggestion(id, { status: 'applied', updatedAt });
+  }
+
   private updateJob(id: string, changes: Partial<ExtractionJob>) {
     const job = this.jobs.find((candidate) => candidate.id === id);
 
@@ -76,6 +96,17 @@ class FakeExtractionJobRepository implements ExtractionJobRepository {
 
     Object.assign(job, changes);
     return job;
+  }
+
+  private updateSuggestion(id: string, changes: Partial<ItemSuggestion>) {
+    const suggestion = this.suggestions.find((candidate) => candidate.id === id);
+
+    if (!suggestion) {
+      throw new Error(`Suggestion ${id} does not exist`);
+    }
+
+    Object.assign(suggestion, changes);
+    return suggestion;
   }
 }
 

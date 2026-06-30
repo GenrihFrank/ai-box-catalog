@@ -92,6 +92,20 @@ ORDER BY created_at ASC;
     return rows.map(toItem);
   }
 
+  async findBySourceSuggestionId(sourceSuggestionId: string): Promise<Item | null> {
+    const row = await this.db.getFirstAsync<ItemRow>(
+      `
+SELECT id, box_id, name, aliases_json, attributes_json, source, source_suggestion_id,
+  source_photo_ids_json, created_at, updated_at, deleted_at
+FROM items
+WHERE source_suggestion_id = ? AND deleted_at IS NULL;
+`,
+      sourceSuggestionId
+    );
+
+    return row ? toItem(row) : null;
+  }
+
   async markDeleted(id: string, deletedAt: string): Promise<void> {
     await this.db.runAsync(
       `

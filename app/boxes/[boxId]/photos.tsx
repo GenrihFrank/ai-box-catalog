@@ -1,20 +1,27 @@
 import * as ImagePicker from 'expo-image-picker';
-import { Link, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { Link, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { SqliteBoxPhotoRepository, SqliteBoxRepository } from '../../../src/db';
-import { addBoxPhoto, type Box, type BoxPhoto } from '../../../src/domain';
+import {
+  SqliteBoxPhotoRepository,
+  SqliteBoxRepository,
+  SqliteExtractionJobRepository
+} from '../../../src/db';
+import { addBoxPhoto, startExtractionJob, type Box, type BoxPhoto } from '../../../src/domain';
+import { mockExtractItemsFromPhotos } from '../../../src/services/extraction/mockExtractItemsFromPhotos';
 import { prepareBoxPhotoAsset } from '../../../src/services/photos/prepareBoxPhotoAsset';
 
 export default function BoxPhotosRoute() {
+  const router = useRouter();
   const db = useSQLiteContext();
   const { boxId } = useLocalSearchParams<{ boxId: string }>();
   const [box, setBox] = useState<Box | null>(null);
   const [photos, setPhotos] = useState<BoxPhoto[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isExtracting, setIsExtracting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const loadPhotos = useCallback(async () => {
@@ -143,6 +150,41 @@ export default function BoxPhotosRoute() {
     }
   }
 
+  async function handleRunMockExtraction() {
+    if (isSaving || isExtracting) {
+      return;
+    }
+
+    if (photos.length === 0) {
+      setErrorMessage('Add at least one photo before extraction.');
+      return;
+    }
+
+    setIsExtracting(true);
+    setErrorMessage(null);
+
+    try {
+      const job = await startExtractionJob(
+        {
+          boxId,
+          photoIds: photos.map((photo) => photo.id),
+          mode: 'mock'
+        },
+        {
+          boxPhotoRepository: new SqliteBoxPhotoRepository(db),
+          extractionJobRepository: new SqliteExtractionJobRepository(db),
+          extractItemsFromPhotos: mockExtractItemsFromPhotos
+        }
+      );
+
+      router.push({ pathname: '/boxes/[boxId]/review/[jobId]', params: { boxId, jobId: job.id } });
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to run extraction');
+    } finally {
+      setIsExtracting(false);
+    }
+  }
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {!isLoaded ? <Text style={styles.body}>Loading photos...</Text> : null}
@@ -183,6 +225,14 @@ export default function BoxPhotosRoute() {
               style={[styles.secondaryButton, isSaving ? styles.disabledButton : null]}
             >
               <Text style={styles.secondaryButtonText}>Add from gallery</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              disabled={isSaving || isExtracting || photos.length === 0}
+              onPress={handleRunMockExtraction}
+              style={[styles.secondaryButton, isSaving || isExtracting || photos.length === 0 ? styles.disabledButton : null]}
+            >
+              <Text style={styles.secondaryButtonText}>{isExtracting ? 'Extracting...' : 'Run mock extraction'}</Text>
             </Pressable>
           </View>
 

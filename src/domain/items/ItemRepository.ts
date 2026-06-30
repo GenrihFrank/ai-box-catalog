@@ -17,5 +17,6 @@ export type ItemRepository = {
   create(input: CreateItemInput): Promise<Item>;
   listByBoxId(boxId: string): Promise<Item[]>;
   listConfirmed(): Promise<Item[]>;
+  findBySourceSuggestionId(sourceSuggestionId: string): Promise<Item | null>;
   markDeleted(id: string, deletedAt: string): Promise<void>;
 };
