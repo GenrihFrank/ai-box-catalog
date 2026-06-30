@@ -58,6 +58,42 @@ describe('searchItems', () => {
     expect(results[0].matchedItems[0].matchedTerms).toEqual(['red', 'dress']);
   });
 
+  it('keeps source photo evidence for matched AI-confirmed items', () => {
+    const results = searchItems('черные перчатки', [
+      {
+        ...baseItem,
+        id: 'item-1',
+        boxId: 'box-1',
+        name: 'перчатки',
+        attributes: { color: 'черные' },
+        source: 'ai_confirmed',
+        sourcePhotoIds: ['photo-1']
+      }
+    ]);
+
+    expect(results).toHaveLength(1);
+    expect(results[0]).toMatchObject({
+      boxId: 'box-1',
+      matchedItems: [
+        {
+          itemId: 'item-1',
+          matchedTerms: ['черные', 'перчатки'],
+          sourcePhotoIds: ['photo-1']
+        }
+      ]
+    });
+  });
+
+  it('returns multiple weak matches as candidates', () => {
+    const results = searchItems('winter gloves', [
+      { ...baseItem, id: 'item-1', boxId: 'box-1', name: 'winter scarf' },
+      { ...baseItem, id: 'item-2', boxId: 'box-2', name: 'leather gloves' }
+    ]);
+
+    expect(results.map((result) => result.boxId)).toEqual(['box-1', 'box-2']);
+    expect(results.every((result) => result.score > 0)).toBe(true);
+  });
+
   it('returns no results for empty or missing query', () => {
     const items = [{ ...baseItem, id: 'item-1', boxId: 'box-1', name: 'black gloves' }];
 

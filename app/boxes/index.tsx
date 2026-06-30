@@ -1,32 +1,45 @@
 import { Link, useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { SqliteBoxRepository, SqliteItemRepository } from '../../src/db';
-import { searchItems, type Box, type Item, type SearchResult } from '../../src/domain';
+import { SqliteBoxPhotoRepository, SqliteBoxRepository, SqliteItemRepository } from '../../src/db';
+import { searchItems, type Box, type BoxPhoto, type Item, type SearchResult } from '../../src/domain';
 
 export default function BoxesRoute() {
   const db = useSQLiteContext();
   const [boxes, setBoxes] = useState<Box[]>([]);
   const [items, setItems] = useState<Item[]>([]);
+  const [photos, setPhotos] = useState<BoxPhoto[]>([]);
   const [query, setQuery] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const trimmedQuery = query.trim();
   const searchResults = trimmedQuery ? searchItems(trimmedQuery, items) : [];
   const boxesById = new Map(boxes.map((box) => [box.id, box]));
+  const photosById = new Map(photos.map((photo) => [photo.id, photo]));
 
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
       const boxRepository = new SqliteBoxRepository(db);
       const itemRepository = new SqliteItemRepository(db);
+      const photoRepository = new SqliteBoxPhotoRepository(db);
 
-      Promise.all([boxRepository.list(), itemRepository.listConfirmed()])
-        .then(([loadedBoxes, loadedItems]) => {
+      boxRepository
+        .list()
+        .then(async (loadedBoxes) => {
+          const [loadedItems, photoGroups] = await Promise.all([
+            itemRepository.listConfirmed(),
+            Promise.all(loadedBoxes.map((box) => photoRepository.listByBoxId(box.id)))
+          ]);
+
+          return { loadedBoxes, loadedItems, loadedPhotos: photoGroups.flat() };
+        })
+        .then(({ loadedBoxes, loadedItems, loadedPhotos }) => {
           if (isActive) {
             setBoxes(loadedBoxes);
             setItems(loadedItems);
+            setPhotos(loadedPhotos);
             setErrorMessage(null);
           }
         })
@@ -77,7 +90,7 @@ export default function BoxesRoute() {
       </View>
 
       {trimmedQuery ? (
-        <SearchResults results={searchResults} boxesById={boxesById} />
+        <SearchResults results={searchResults} boxesById={boxesById} photosById={photosById} />
       ) : (
         <View style={styles.list}>
           {boxes.map((box) => (
@@ -96,11 +109,20 @@ export default function BoxesRoute() {
   );
 }
 
-function SearchResults({ results, boxesById }: { results: SearchResult[]; boxesById: Map<string, Box> }) {
+function SearchResults({
+  results,
+  boxesById,
+  photosById
+}: {
+  results: SearchResult[];
+  boxesById: Map<string, Box>;
+  photosById: Map<string, BoxPhoto>;
+}) {
   if (results.length === 0) {
     return (
       <View style={styles.emptyState}>
-        <Text style={styles.emptyTitle}>No confirmed item found</Text>
+        <Text style={styles.emptyTitle}>No candidates found</Text>
+        <Text style={styles.body}>Only confirmed items are searched.</Text>
       </View>
     );
   }
@@ -109,6 +131,7 @@ function SearchResults({ results, boxesById }: { results: SearchResult[]; boxesB
     <View style={styles.list}>
       {results.map((result) => {
         const box = boxesById.get(result.boxId);
+        const evidencePhotos = collectEvidencePhotos(result, photosById);
 
         if (!box) {
           return null;
@@ -116,12 +139,25 @@ function SearchResults({ results, boxesById }: { results: SearchResult[]; boxesB
 
         return (
           <Link key={result.boxId} href={{ pathname: '/boxes/[boxId]', params: { boxId: result.boxId } }} asChild>
-            <Pressable style={styles.boxRow}>
+            <Pressable style={[styles.boxRow, styles.searchResultRow]}>
               <View style={styles.searchResultText}>
-                <Text style={styles.boxTitle}>Box {box.number}</Text>
-                <Text style={styles.boxLabel}>
-                  {result.matchedItems.map((item) => item.name).join(', ')}
-                </Text>
+                <Text style={styles.boxTitle}>Candidate: Box {box.number}</Text>
+                <Text style={styles.boxLabel}>Score {result.score}</Text>
+                {result.matchedItems.map((item) => (
+                  <View key={item.itemId} style={styles.matchedItemBlock}>
+                    <Text style={styles.itemName}>{item.name}</Text>
+                    <Text style={styles.boxLabel}>Matched: {item.matchedTerms.join(', ')}</Text>
+                  </View>
+                ))}
+                {evidencePhotos.length > 0 ? (
+                  <View style={styles.evidenceList}>
+                    {evidencePhotos.map((photo) => (
+                      <Image key={photo.id} source={{ uri: photo.thumbnailUri }} style={styles.evidencePhoto} />
+                    ))}
+                  </View>
+                ) : (
+                  <Text style={styles.boxLabel}>No photo evidence.</Text>
+                )}
               </View>
               <Text style={styles.chevron}>Open</Text>
             </Pressable>
@@ -130,6 +166,28 @@ function SearchResults({ results, boxesById }: { results: SearchResult[]; boxesB
       })}
     </View>
   );
+}
+
+function collectEvidencePhotos(result: SearchResult, photosById: Map<string, BoxPhoto>): BoxPhoto[] {
+  const seenPhotoIds = new Set<string>();
+  const evidencePhotos: BoxPhoto[] = [];
+
+  for (const item of result.matchedItems) {
+    for (const photoId of item.sourcePhotoIds) {
+      if (seenPhotoIds.has(photoId)) {
+        continue;
+      }
+
+      const photo = photosById.get(photoId);
+
+      if (photo) {
+        evidencePhotos.push(photo);
+        seenPhotoIds.add(photoId);
+      }
+    }
+  }
+
+  return evidencePhotos;
 }
 
 function BoxRow({ box }: { box: Box }) {
@@ -214,6 +272,9 @@ const styles = StyleSheet.create({
     minHeight: 72,
     padding: 16
   },
+  searchResultRow: {
+    alignItems: 'flex-start'
+  },
   boxTitle: {
     fontSize: 18,
     fontWeight: '700'
@@ -226,6 +287,26 @@ const styles = StyleSheet.create({
   searchResultText: {
     flex: 1,
     gap: 4
+  },
+  matchedItemBlock: {
+    gap: 2,
+    marginTop: 4
+  },
+  itemName: {
+    fontSize: 16,
+    fontWeight: '700'
+  },
+  evidenceList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 6
+  },
+  evidencePhoto: {
+    aspectRatio: 1,
+    backgroundColor: '#eef2f6',
+    borderRadius: 6,
+    width: 64
   },
   chevron: {
     color: '#0b57d0',
