@@ -24,6 +24,7 @@ Use this shape for implementation:
 - `pnpm dev` starts Expo locally.
 - `pnpm backend:dev` starts the local extraction backend. Set
   `LOCAL_DESKTOP_VLM_URL` to enable `local-desktop-vlm` proxy mode.
+  That local VLM endpoint must accept `{ boxId, photos }` and return `{ items }`.
   Set `EXPO_PUBLIC_EXTRACTION_BACKEND_URL` for the mobile app to call that backend.
 - `pnpm test` runs Vitest unit tests.
 - `pnpm test:e2e` runs Maestro Android flows.

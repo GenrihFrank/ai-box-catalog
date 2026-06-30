@@ -11,12 +11,15 @@ describe('createLocalDesktopVlmExtractItemsFromPhotos', () => {
         calls.push({ url: String(url), init: init ?? {} });
         return new Response(
           JSON.stringify({
-            suggestions: [
+            items: [
               {
-                id: 'suggestion-1',
                 name: 'black gloves',
+                attributes: {
+                  color: 'black',
+                  category: 'clothes'
+                },
                 sourcePhotoIds: ['photo-1'],
-                selectedByDefault: true
+                reason: 'Visible on the top of the box.'
               }
             ]
           }),
@@ -44,9 +47,14 @@ describe('createLocalDesktopVlmExtractItemsFromPhotos', () => {
     ).resolves.toMatchObject({
       suggestions: [
         {
-          id: 'suggestion-1',
+          id: 'local-vlm-1',
           name: 'black gloves',
+          attributes: {
+            color: 'black',
+            category: 'clothes'
+          },
           sourcePhotoIds: ['photo-1'],
+          reason: 'Visible on the top of the box.',
           selectedByDefault: true
         }
       ]
@@ -55,7 +63,6 @@ describe('createLocalDesktopVlmExtractItemsFromPhotos', () => {
     expect(calls[0].url).toBe('http://127.0.0.1:8788/extract');
     expect(JSON.parse(String(calls[0].init.body))).toEqual({
       boxId: 'box-1',
-      photoIds: ['photo-1'],
       photos: [
         {
           id: 'photo-1',
@@ -65,8 +72,7 @@ describe('createLocalDesktopVlmExtractItemsFromPhotos', () => {
           height: 960,
           byteSize: 120000
         }
-      ],
-      mode: 'local-desktop-vlm'
+      ]
     });
   });
 
@@ -77,7 +83,21 @@ describe('createLocalDesktopVlmExtractItemsFromPhotos', () => {
     });
 
     await expect(
-      adapter({ boxId: 'box-1', photoIds: ['photo-1'], mode: 'local-desktop-vlm' })
+      adapter({
+        boxId: 'box-1',
+        photoIds: ['photo-1'],
+        photos: [
+          {
+            id: 'photo-1',
+            mimeType: 'image/jpeg',
+            dataBase64: 'base64-photo-1',
+            width: 1280,
+            height: 960,
+            byteSize: 120000
+          }
+        ],
+        mode: 'local-desktop-vlm'
+      })
     ).rejects.toThrow();
   });
 
@@ -88,7 +108,37 @@ describe('createLocalDesktopVlmExtractItemsFromPhotos', () => {
     });
 
     await expect(
-      adapter({ boxId: 'box-1', photoIds: ['photo-1'], mode: 'local-desktop-vlm' })
+      adapter({
+        boxId: 'box-1',
+        photoIds: ['photo-1'],
+        photos: [
+          {
+            id: 'photo-1',
+            mimeType: 'image/jpeg',
+            dataBase64: 'base64-photo-1',
+            width: 1280,
+            height: 960,
+            byteSize: 120000
+          }
+        ],
+        mode: 'local-desktop-vlm'
+      })
     ).rejects.toThrow('Local desktop VLM failed with status 400');
+  });
+
+  it('requires photo payloads before calling local desktop VLM', async () => {
+    let called = false;
+    const adapter = createLocalDesktopVlmExtractItemsFromPhotos({
+      endpointUrl: 'http://127.0.0.1:8788/extract',
+      fetchImpl: async () => {
+        called = true;
+        return new Response(JSON.stringify({ items: [] }), { status: 200 });
+      }
+    });
+
+    await expect(
+      adapter({ boxId: 'box-1', photoIds: ['photo-1'], mode: 'local-desktop-vlm' })
+    ).rejects.toThrow();
+    expect(called).toBe(false);
   });
 });

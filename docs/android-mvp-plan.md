@@ -127,6 +127,8 @@ type ItemSuggestion = {
 - First adapter: `mock`, for UI and flow development without a model.
 - Second adapter: `local-desktop-vlm`, where the app sends compressed JPEG photos
   as base64 payloads to a local backend on the same network.
+- The local desktop VLM endpoint receives `{ boxId, photos }` and returns
+  `{ items }`; the backend maps those items to app `ItemSuggestion` records.
 - Keep `cloud-vlm` as an optional quality benchmark only.
 - Validate request and response shapes with Zod.
 

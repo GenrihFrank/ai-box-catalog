@@ -472,7 +472,49 @@ Validation rules:
 
 - Mobile side rejects jobs where selected photos belong to different boxes.
 - Server validates request and response with Zod.
-- Server rejects oversized or invalid image inputs once uploads are implemented.
+- `local-desktop-vlm` requires `photos[]`; `photoIds` alone are not enough for
+  model extraction.
+- Server rejects oversized or invalid image inputs once upload limits are
+  implemented.
+
+### Local Desktop VLM Contract
+
+The backend calls `LOCAL_DESKTOP_VLM_URL` with this body:
+
+```ts
+type LocalDesktopVlmRequest = {
+  boxId: string;
+  photos: {
+    id: string;
+    mimeType: 'image/jpeg';
+    dataBase64: string;
+    width: number;
+    height: number;
+    byteSize: number;
+  }[];
+};
+```
+
+The local VLM service must return:
+
+```ts
+type LocalDesktopVlmResponse = {
+  items: {
+    name: string;
+    attributes?: {
+      color?: string;
+      category?: string;
+      season?: string;
+      material?: string;
+    };
+    sourcePhotoIds: string[];
+    reason?: string;
+  }[];
+};
+```
+
+The backend validates this response and maps each item to an `ItemSuggestion`
+with a deterministic `local-vlm-{n}` id and `selectedByDefault: true`.
 - Invalid model output becomes job failure, not partially trusted catalog data.
 - `cloud-vlm` remains optional benchmark, not an MVP dependency.
 

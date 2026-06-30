@@ -1,8 +1,11 @@
 import type { ExtractItemsFromPhotos } from '../../domain/extraction';
 import {
-  extractItemsResponseSchema,
   type ExtractItemsResponse
 } from '../../shared/extractionContract';
+import {
+  localDesktopVlmRequestSchema,
+  localDesktopVlmResponseSchema
+} from './localDesktopVlmContract';
 
 export type LocalDesktopVlmConfig = {
   endpointUrl: string;
@@ -15,12 +18,16 @@ export function createLocalDesktopVlmExtractItemsFromPhotos(
   const fetchImpl = config.fetchImpl ?? fetch;
 
   return async (request) => {
+    const localRequest = localDesktopVlmRequestSchema.parse({
+      boxId: request.boxId,
+      photos: request.photos
+    });
     const response = await fetchImpl(config.endpointUrl, {
       method: 'POST',
       headers: {
         'content-type': 'application/json'
       },
-      body: JSON.stringify(request)
+      body: JSON.stringify(localRequest)
     });
 
     if (!response.ok) {
@@ -28,6 +35,17 @@ export function createLocalDesktopVlmExtractItemsFromPhotos(
     }
 
     const payload = (await response.json()) as unknown;
-    return extractItemsResponseSchema.parse(payload) satisfies ExtractItemsResponse;
+    const parsedPayload = localDesktopVlmResponseSchema.parse(payload);
+
+    return {
+      suggestions: parsedPayload.items.map((item, index) => ({
+        id: `local-vlm-${index + 1}`,
+        name: item.name,
+        attributes: item.attributes,
+        sourcePhotoIds: item.sourcePhotoIds,
+        reason: item.reason,
+        selectedByDefault: true
+      }))
+    } satisfies ExtractItemsResponse;
   };
 }
