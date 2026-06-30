@@ -6,6 +6,7 @@
   "main": "expo-router/entry",
   "scripts": {
     "dev": "expo start",
+    "backend:dev": "tsx src/server/index.ts",
     "android": "expo start --android",
     "test": "vitest run",
     "test:e2e": "maestro test e2e",
@@ -22,6 +23,7 @@
     "expo-router": "^56.2.11",
     "expo-sqlite": "~56.0.5",
     "expo-status-bar": "^56.0.4",
+    "fastify": "^5.9.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.85.0",
@@ -30,11 +32,14 @@
     "react-native-safe-area-context": "^5.4.0",
     "react-native-screens": "^4.25.2",
     "react-native-svg": "^15.15.5",
-    "react-native-worklets": "^0.8.0"
+    "react-native-worklets": "^0.8.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@react-native/metro-config": "0.85.0",
+    "@types/node": "^26.0.1",
     "@types/react": "^19.2.17",
+    "tsx": "^4.22.4",
     "typescript": "^6.0.3",
     "vitest": "^4.0.0"
   }

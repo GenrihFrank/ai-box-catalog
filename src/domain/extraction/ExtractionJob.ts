@@ -1,6 +1,7 @@
 import type { ItemAttributes } from '../items';
+import type { ExtractionMode } from '../../shared/extractionContract';
 
-export type ExtractionMode = 'mock' | 'local-desktop-vlm' | 'cloud-vlm';
+export type { ExtractionMode };
 
 export type ExtractionJobStatus = 'pending' | 'running' | 'needs_review' | 'failed' | 'applied';
 

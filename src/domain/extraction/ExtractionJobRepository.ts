@@ -14,4 +14,6 @@ export type ExtractionJobRepository = {
   findById(id: string): Promise<ExtractionJob | null>;
   listSuggestions(jobId: string): Promise<ItemSuggestion[]>;
   saveSuggestions(jobId: string, suggestions: ItemSuggestion[]): Promise<void>;
+  markNeedsReview(id: string, updatedAt: string): Promise<ExtractionJob>;
+  markFailed(id: string, errorMessage: string, updatedAt: string): Promise<ExtractionJob>;
 };
