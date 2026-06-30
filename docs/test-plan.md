@@ -75,3 +75,12 @@ Minimum eval:
 - Unit: repository methods, suggestion apply, search scoring, QR payload generation.
 - E2E: create box, manual edit, photo review, search, QR navigation.
 - Eval: AI extraction quality and search recall over the fixture.
+
+## Current E2E Coverage
+
+- `e2e/create-manual-search.yaml` covers first box creation, manual item add,
+  search candidate display, and item deletion.
+- `e2e/qr-missing.yaml` covers recoverable QR/deep-link not-found behavior.
+
+Camera/gallery E2E coverage still needs an Android fixture and device-specific
+handling for system pickers.

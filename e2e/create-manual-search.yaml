@@ -1,0 +1,27 @@
+appId: com.aiboxcatalog.app
+---
+- launchApp:
+    clearState: true
+- assertVisible: "Boxes"
+- tapOn: "New"
+- assertVisible: "New box"
+- tapOn: "Box label input"
+- inputText: "Winter clothes"
+- tapOn: "Create box button"
+- assertVisible: "Box 1"
+- assertVisible: "Winter clothes"
+- tapOn: "Add item input"
+- inputText: "black gloves"
+- tapOn: "Add item button"
+- assertVisible: "black gloves"
+- back
+- assertVisible: "Boxes"
+- tapOn: "Search items input"
+- inputText: "black gloves"
+- assertVisible: "Candidate: Box 1"
+- assertVisible: "black gloves"
+- assertVisible: "No photo evidence."
+- tapOn: "Open candidate box 1"
+- assertVisible: "Box 1"
+- tapOn: "Delete item black gloves"
+- assertVisible: "No items yet."

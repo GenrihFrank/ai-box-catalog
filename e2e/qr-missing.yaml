@@ -1,0 +1,9 @@
+appId: com.aiboxcatalog.app
+---
+- launchApp:
+    clearState: true
+- openLink: "aiboxcatalog://qr/missing-box"
+- assertVisible: "Box not found"
+- assertVisible: "The scanned QR points to a missing local box."
+- tapOn: "Back to boxes"
+- assertVisible: "Boxes"

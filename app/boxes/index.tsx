@@ -81,6 +81,7 @@ export default function BoxesRoute() {
 
       <View style={styles.searchBox}>
         <TextInput
+          accessibilityLabel="Search items input"
           value={query}
           onChangeText={setQuery}
           placeholder="Search items"
@@ -139,7 +140,10 @@ function SearchResults({
 
         return (
           <Link key={result.boxId} href={{ pathname: '/boxes/[boxId]', params: { boxId: result.boxId } }} asChild>
-            <Pressable style={[styles.boxRow, styles.searchResultRow]}>
+            <Pressable
+              accessibilityLabel={`Open candidate box ${box.number}`}
+              style={[styles.boxRow, styles.searchResultRow]}
+            >
               <View style={styles.searchResultText}>
                 <Text style={styles.boxTitle}>Candidate: Box {box.number}</Text>
                 <Text style={styles.boxLabel}>Score {result.score}</Text>

@@ -41,6 +41,7 @@ export default function NewBoxRoute() {
       <View style={styles.field}>
         <Text style={styles.label}>Label</Text>
         <TextInput
+          accessibilityLabel="Box label input"
           value={label}
           onChangeText={setLabel}
           placeholder="Winter clothes"
@@ -52,6 +53,7 @@ export default function NewBoxRoute() {
       {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
 
       <Pressable
+        accessibilityLabel="Create box button"
         accessibilityRole="button"
         disabled={isSaving}
         onPress={handleCreateBox}

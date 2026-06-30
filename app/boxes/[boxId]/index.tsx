@@ -152,6 +152,7 @@ export default function BoxRoute() {
 
           <View style={styles.addItemForm}>
             <TextInput
+              accessibilityLabel="Add item input"
               value={newItemName}
               onChangeText={setNewItemName}
               placeholder="Add item"
@@ -160,6 +161,7 @@ export default function BoxRoute() {
               onSubmitEditing={handleAddItem}
             />
             <Pressable
+              accessibilityLabel="Add item button"
               accessibilityRole="button"
               disabled={isSavingItem}
               onPress={handleAddItem}
@@ -173,7 +175,11 @@ export default function BoxRoute() {
             {items.map((item) => (
               <View key={item.id} style={styles.itemRow}>
                 <Text style={styles.itemName}>{item.name}</Text>
-                <Pressable accessibilityRole="button" onPress={() => handleDeleteItem(item.id)}>
+                <Pressable
+                  accessibilityLabel={`Delete item ${item.name}`}
+                  accessibilityRole="button"
+                  onPress={() => handleDeleteItem(item.id)}
+                >
                   <Text style={styles.deleteText}>Delete</Text>
                 </Pressable>
               </View>
