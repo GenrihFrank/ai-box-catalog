@@ -9,7 +9,15 @@ import {
   SqliteBoxRepository,
   SqliteExtractionJobRepository
 } from '../../../src/db';
-import { addBoxPhoto, startExtractionJob, type Box, type BoxPhoto } from '../../../src/domain';
+import {
+  addBoxPhoto,
+  startExtractionJob,
+  type Box,
+  type BoxPhoto,
+  type ExtractionMode,
+  type ExtractItemsFromPhotos
+} from '../../../src/domain';
+import { createBackendExtractItemsFromPhotos } from '../../../src/services/extraction/backendExtractItemsFromPhotos';
 import { mockExtractItemsFromPhotos } from '../../../src/services/extraction/mockExtractItemsFromPhotos';
 import { prepareBoxPhotoAsset } from '../../../src/services/photos/prepareBoxPhotoAsset';
 
@@ -21,8 +29,9 @@ export default function BoxPhotosRoute() {
   const [photos, setPhotos] = useState<BoxPhoto[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isExtracting, setIsExtracting] = useState(false);
+  const [extractingMode, setExtractingMode] = useState<ExtractionMode | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const isExtracting = extractingMode !== null;
 
   const loadPhotos = useCallback(async () => {
     const boxRepository = new SqliteBoxRepository(db);
@@ -151,6 +160,24 @@ export default function BoxPhotosRoute() {
   }
 
   async function handleRunMockExtraction() {
+    await runExtraction('mock', mockExtractItemsFromPhotos);
+  }
+
+  async function handleRunLocalExtraction() {
+    const extractionBackendUrl = process.env.EXPO_PUBLIC_EXTRACTION_BACKEND_URL?.trim();
+
+    if (!extractionBackendUrl) {
+      setErrorMessage('Set EXPO_PUBLIC_EXTRACTION_BACKEND_URL to run local extraction.');
+      return;
+    }
+
+    await runExtraction(
+      'local-desktop-vlm',
+      createBackendExtractItemsFromPhotos({ baseUrl: extractionBackendUrl })
+    );
+  }
+
+  async function runExtraction(mode: ExtractionMode, extractItemsFromPhotos: ExtractItemsFromPhotos) {
     if (isSaving || isExtracting) {
       return;
     }
@@ -160,7 +187,7 @@ export default function BoxPhotosRoute() {
       return;
     }
 
-    setIsExtracting(true);
+    setExtractingMode(mode);
     setErrorMessage(null);
 
     try {
@@ -168,20 +195,25 @@ export default function BoxPhotosRoute() {
         {
           boxId,
           photoIds: photos.map((photo) => photo.id),
-          mode: 'mock'
+          mode
         },
         {
           boxPhotoRepository: new SqliteBoxPhotoRepository(db),
           extractionJobRepository: new SqliteExtractionJobRepository(db),
-          extractItemsFromPhotos: mockExtractItemsFromPhotos
+          extractItemsFromPhotos
         }
       );
+
+      if (job.status === 'failed') {
+        setErrorMessage(job.errorMessage ?? 'Extraction failed');
+        return;
+      }
 
       router.push({ pathname: '/boxes/[boxId]/review/[jobId]', params: { boxId, jobId: job.id } });
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Failed to run extraction');
     } finally {
-      setIsExtracting(false);
+      setExtractingMode(null);
     }
   }
 
@@ -232,7 +264,19 @@ export default function BoxPhotosRoute() {
               onPress={handleRunMockExtraction}
               style={[styles.secondaryButton, isSaving || isExtracting || photos.length === 0 ? styles.disabledButton : null]}
             >
-              <Text style={styles.secondaryButtonText}>{isExtracting ? 'Extracting...' : 'Run mock extraction'}</Text>
+              <Text style={styles.secondaryButtonText}>
+                {extractingMode === 'mock' ? 'Extracting...' : 'Run mock extraction'}
+              </Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              disabled={isSaving || isExtracting || photos.length === 0}
+              onPress={handleRunLocalExtraction}
+              style={[styles.secondaryButton, isSaving || isExtracting || photos.length === 0 ? styles.disabledButton : null]}
+            >
+              <Text style={styles.secondaryButtonText}>
+                {extractingMode === 'local-desktop-vlm' ? 'Extracting...' : 'Run local extraction'}
+              </Text>
             </Pressable>
           </View>
 
