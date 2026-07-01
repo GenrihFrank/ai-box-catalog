@@ -171,7 +171,7 @@ describe('startExtractionJob', () => {
             byteSize: 120000
           }
         ],
-        mode: 'local-desktop-vlm'
+        mode: 'on-device-vlm'
       },
       {
         boxPhotoRepository: new FakeBoxPhotoRepository([createPhoto('photo-1', 'box-1')]),
@@ -208,7 +208,7 @@ describe('startExtractionJob', () => {
             byteSize: 120000
           }
         ],
-        mode: 'local-desktop-vlm'
+        mode: 'on-device-vlm'
       }
     ]);
   });

@@ -433,6 +433,8 @@ photos do not need to leave the device for the primary AI path.
 Implementation direction:
 
 - Use a native Android adapter behind the same `extractItemsFromPhotos` interface.
+- The React Native side calls `NativeModules.AiBoxCatalogOnDeviceVlm.extractItems`
+  through `createOnDeviceVlmExtractItemsFromPhotos`.
 - Prefer Google AI Edge / LiteRT-LM or MediaPipe-compatible Android APIs for the
   first spike because they support on-device multimodal prompting on Android.
 - Treat React Native JavaScript as orchestration only; model loading and inference

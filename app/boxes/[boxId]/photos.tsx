@@ -2,7 +2,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Link, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, NativeModules, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import {
   SqliteBoxPhotoRepository,
@@ -20,6 +20,10 @@ import {
 import { createBackendExtractItemsFromPhotos } from '../../../src/services/extraction/backendExtractItemsFromPhotos';
 import { createExtractionPhotoPayloads } from '../../../src/services/extraction/createExtractionPhotoPayloads';
 import { mockExtractItemsFromPhotos } from '../../../src/services/extraction/mockExtractItemsFromPhotos';
+import {
+  createOnDeviceVlmExtractItemsFromPhotos,
+  type OnDeviceVlmNativeModule
+} from '../../../src/services/extraction/onDeviceVlmExtractItemsFromPhotos';
 import { prepareBoxPhotoAsset } from '../../../src/services/photos/prepareBoxPhotoAsset';
 
 export default function BoxPhotosRoute() {
@@ -164,6 +168,15 @@ export default function BoxPhotosRoute() {
     await runExtraction('mock', mockExtractItemsFromPhotos);
   }
 
+  async function handleRunOnDeviceExtraction() {
+    await runExtraction(
+      'on-device-vlm',
+      createOnDeviceVlmExtractItemsFromPhotos({
+        nativeModule: NativeModules.AiBoxCatalogOnDeviceVlm as OnDeviceVlmNativeModule | undefined
+      })
+    );
+  }
+
   async function handleRunLocalExtraction() {
     const extractionBackendUrl = process.env.EXPO_PUBLIC_EXTRACTION_BACKEND_URL?.trim();
 
@@ -193,7 +206,9 @@ export default function BoxPhotosRoute() {
 
     try {
       const extractionPhotos =
-        mode === 'local-desktop-vlm' ? await createExtractionPhotoPayloads(photos) : undefined;
+        mode === 'on-device-vlm' || mode === 'local-desktop-vlm'
+          ? await createExtractionPhotoPayloads(photos)
+          : undefined;
       const job = await startExtractionJob(
         {
           boxId,
@@ -270,6 +285,16 @@ export default function BoxPhotosRoute() {
             >
               <Text style={styles.secondaryButtonText}>
                 {extractingMode === 'mock' ? 'Extracting...' : 'Run mock extraction'}
+              </Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              disabled={isSaving || isExtracting || photos.length === 0}
+              onPress={handleRunOnDeviceExtraction}
+              style={[styles.secondaryButton, isSaving || isExtracting || photos.length === 0 ? styles.disabledButton : null]}
+            >
+              <Text style={styles.secondaryButtonText}>
+                {extractingMode === 'on-device-vlm' ? 'Extracting...' : 'Run on-device AI'}
               </Text>
             </Pressable>
             <Pressable
