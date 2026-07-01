@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS extraction_jobs (
   id TEXT PRIMARY KEY NOT NULL,
   box_id TEXT NOT NULL,
   photo_ids_json TEXT NOT NULL,
-  mode TEXT NOT NULL CHECK (mode IN ('mock', 'local-desktop-vlm', 'cloud-vlm')),
+  mode TEXT NOT NULL CHECK (mode IN ('mock', 'on-device-vlm', 'local-desktop-vlm', 'cloud-vlm')),
   status TEXT NOT NULL CHECK (status IN ('pending', 'running', 'needs_review', 'failed', 'applied')),
   error_message TEXT,
   created_at TEXT NOT NULL,

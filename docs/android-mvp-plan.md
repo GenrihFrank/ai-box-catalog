@@ -22,9 +22,11 @@ Chosen stack:
 - Photos/files: expo-camera, expo-image-picker, expo-image-manipulator,
   expo-file-system
 - QR: react-native-qrcode-svg, scanning through expo-camera
-- Backend adapter: Node.js, TypeScript, Fastify, Zod
+- On-device AI adapter: native Android VLM runtime behind `extractItemsFromPhotos`
+- Backend adapter: Node.js, TypeScript, Fastify, Zod, kept for desktop fallback and
+  optional quality benchmarks
 - Item extraction: extractItemsFromPhotos adapter, starting with mock, then
-  local-desktop-vlm
+  on-device-vlm
 - Tests: Vitest for domain logic, Maestro for Android E2E
 
 ## Implementation Plan
@@ -93,7 +95,7 @@ Acceptance:
 - Introduce shared interface:
 
 ```ts
-type ExtractionMode = 'mock' | 'local-desktop-vlm' | 'cloud-vlm';
+type ExtractionMode = 'mock' | 'on-device-vlm' | 'local-desktop-vlm' | 'cloud-vlm';
 
 type ExtractItemsRequest = {
   boxId: string;
@@ -125,8 +127,11 @@ type ItemSuggestion = {
 ```
 
 - First adapter: `mock`, for UI and flow development without a model.
-- Second adapter: `local-desktop-vlm`, where the app sends compressed JPEG photos
-  as base64 payloads to a local backend on the same network.
+- MVP adapter: `on-device-vlm`, where the phone runs the vision-language model
+  locally and returns structured item suggestions without sending photos off-device.
+- Fallback adapter: `local-desktop-vlm`, where the app sends compressed JPEG photos
+  as base64 payloads to a local backend on the same network. This is a development
+  fallback and quality benchmark, not the target MVP runtime.
 - The local desktop VLM endpoint receives `{ boxId, photos }` and returns
   `{ items }`; the backend maps those items to app `ItemSuggestion` records.
 - Keep `cloud-vlm` as an optional quality benchmark only.
@@ -212,8 +217,8 @@ AI eval fixture:
 - Android is the first target.
 - iOS is a future target, so avoid Android-only libraries unless isolated behind adapters.
 - No accounts, sharing, payments, subscriptions, or cloud sync in MVP.
-- On-device phone VLM is deferred.
-- First free AI experiment is local-desktop-vlm.
+- On-device phone VLM is required for the MVP AI path.
+- `local-desktop-vlm` remains a development fallback and quality benchmark.
 - Backend stores no primary domain data. Mobile SQLite is the source of truth.
 - Exact object highlighting on photos is v2.
 - Cloud AI is optional benchmark only, not required for MVP.

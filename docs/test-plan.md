@@ -46,6 +46,8 @@ Related plan: [engineering-plan.md](./engineering-plan.md)
 - Duplicate AI suggestions.
 - AI returns invalid structured output.
 - AI request times out.
+- On-device model is missing or cannot be loaded.
+- On-device model returns invalid structured output.
 - User closes or reloads app during extraction.
 - User adds manual item while extraction job is pending.
 - QR points to deleted or missing box.
@@ -74,7 +76,8 @@ Minimum eval:
 
 - Unit: repository methods, suggestion apply, search scoring, QR payload generation.
 - E2E: create box, manual edit, photo review, search, QR navigation.
-- Eval: AI extraction quality and search recall over the fixture.
+- Eval: on-device AI extraction quality, load time, failure behavior, and search
+  recall over the fixture on a real Android phone.
 
 ## Current E2E Coverage
 

@@ -70,6 +70,24 @@ describe('POST /api/extract-items', () => {
     });
   });
 
+  it('does not run on-device VLM mode on the extraction backend', async () => {
+    const server = buildServer();
+    const response = await server.inject({
+      method: 'POST',
+      url: '/api/extract-items',
+      payload: {
+        boxId: 'box-1',
+        photoIds: ['photo-1'],
+        mode: 'on-device-vlm'
+      }
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toMatchObject({
+      error: 'on-device-vlm mode runs on the mobile app, not the extraction backend'
+    });
+  });
+
   it('uses configured local desktop VLM adapter', async () => {
     const requests: unknown[] = [];
     const server = buildServer({

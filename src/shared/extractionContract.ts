@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const extractionModeSchema = z.enum(['mock', 'local-desktop-vlm', 'cloud-vlm']);
+export const extractionModeSchema = z.enum(['mock', 'on-device-vlm', 'local-desktop-vlm', 'cloud-vlm']);
 
 export const itemAttributesSchema = z
   .object({

@@ -168,7 +168,7 @@ export default function BoxPhotosRoute() {
     const extractionBackendUrl = process.env.EXPO_PUBLIC_EXTRACTION_BACKEND_URL?.trim();
 
     if (!extractionBackendUrl) {
-      setErrorMessage('Set EXPO_PUBLIC_EXTRACTION_BACKEND_URL to run local extraction.');
+      setErrorMessage('Set EXPO_PUBLIC_EXTRACTION_BACKEND_URL to run desktop fallback extraction.');
       return;
     }
 
@@ -279,7 +279,7 @@ export default function BoxPhotosRoute() {
               style={[styles.secondaryButton, isSaving || isExtracting || photos.length === 0 ? styles.disabledButton : null]}
             >
               <Text style={styles.secondaryButtonText}>
-                {extractingMode === 'local-desktop-vlm' ? 'Extracting...' : 'Run local extraction'}
+                {extractingMode === 'local-desktop-vlm' ? 'Extracting...' : 'Run desktop fallback'}
               </Text>
             </Pressable>
           </View>

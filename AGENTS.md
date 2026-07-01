@@ -28,6 +28,8 @@ Use this shape for implementation:
   `LOCAL_DESKTOP_VLM_URL` to enable `local-desktop-vlm` proxy mode.
   That local VLM endpoint must accept `{ boxId, photos }` and return `{ items }`.
   Set `EXPO_PUBLIC_EXTRACTION_BACKEND_URL` for the mobile app to call that backend.
+  This backend path is a fallback/benchmark only; the MVP AI target is
+  `on-device-vlm` running on the Android phone.
 - `pnpm test` runs Vitest unit tests.
 - `pnpm test:e2e` runs Maestro Android flows.
 - `pnpm typecheck` validates TypeScript.

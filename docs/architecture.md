@@ -20,7 +20,9 @@ Expo и TypeScript.
 - Mobile app является главным продуктом и владельцем доменных данных.
 - SQLite в мобильном приложении является source of truth для boxes, items, photos,
   extraction jobs и suggestions.
-- Backend нужен только как adapter boundary для извлечения предметов из фото.
+- On-device VLM runtime на телефоне является целевым AI runtime для MVP.
+- Backend нужен только как adapter boundary для desktop fallback, eval и будущих
+  benchmark-сценариев.
 - AI никогда не пишет confirmed items напрямую. AI возвращает только suggestions,
   которые пользователь подтверждает на review screen.
 - QR payload всегда содержит стабильный `boxId`, а не изменяемый номер коробки.
@@ -44,15 +46,17 @@ flowchart LR
   Mobile["AI Box Catalog mobile app<br/>Expo / React Native"]
   SQLite[("Mobile SQLite<br/>source of truth")]
   Files[("Local photo files<br/>compressed originals + thumbnails")]
+  OnDeviceVlm["On-device VLM<br/>Android native runtime"]
   Backend["Extraction backend<br/>Node.js / Fastify / Zod"]
-  LocalVlm["Local desktop VLM<br/>same network"]
+  LocalVlm["Local desktop VLM<br/>fallback / benchmark"]
   CloudVlm["Cloud VLM<br/>optional benchmark"]
 
   User --> Mobile
   Mobile --> SQLite
   Mobile --> Files
-  Mobile -- "POST /api/extract-items<br/>photos + boxId + mode" --> Backend
-  Backend --> LocalVlm
+  Mobile --> OnDeviceVlm
+  Mobile -. "fallback only<br/>POST /api/extract-items" .-> Backend
+  Backend -. "fallback only" .-> LocalVlm
   Backend -. "optional" .-> CloudVlm
 ```
 
@@ -60,8 +64,9 @@ flowchart LR
 
 - Приложение должно быть полезным без live AI: manual item entry и mock extraction
   обязательны для разработки и тестов.
-- Backend не хранит основной каталог. Он может валидировать запрос, вызвать модель
-  и вернуть suggestions, но не становится владельцем boxes/items/photos.
+- Backend не хранит основной каталог. Для MVP AI path он не участвует; для fallback
+  он может валидировать запрос, вызвать desktop model и вернуть suggestions, но не
+  становится владельцем boxes/items/photos.
 - Фото являются личными данными. Не логировать image payloads и item names без
   явной локальной отладки.
 
@@ -81,7 +86,7 @@ flowchart TB
   subgraph Backend["server/"]
     Api["Fastify route<br/>POST /api/extract-items"]
     Schemas["Zod request/response schemas"]
-    Extractors["extractItemsFromPhotos adapters<br/>mock / local-desktop-vlm / cloud-vlm"]
+    Extractors["extractItemsFromPhotos adapters<br/>mock / on-device-vlm / local-desktop-vlm / cloud-vlm"]
   end
 
   Routes --> State
@@ -240,7 +245,7 @@ Fields:
 - `id`.
 - `boxId`.
 - `photoIds`.
-- `mode`: `mock`, `local-desktop-vlm`, `cloud-vlm`.
+- `mode`: `mock`, `on-device-vlm`, `local-desktop-vlm`, `cloud-vlm`.
 - `status`: `pending`, `running`, `needs_review`, `failed`, `applied`.
 - `errorMessage`.
 - `createdAt`, `updatedAt`.
@@ -420,6 +425,33 @@ flowchart TD
 
 ## 9. Extraction API Contract
 
+### MVP On-Device VLM Runtime
+
+The MVP AI runtime is `on-device-vlm`: inference runs on the Android phone, and
+photos do not need to leave the device for the primary AI path.
+
+Implementation direction:
+
+- Use a native Android adapter behind the same `extractItemsFromPhotos` interface.
+- Prefer Google AI Edge / LiteRT-LM or MediaPipe-compatible Android APIs for the
+  first spike because they support on-device multimodal prompting on Android.
+- Treat React Native JavaScript as orchestration only; model loading and inference
+  should live behind a native module or isolated Android adapter.
+- Do not bundle large model files into the APK for MVP development. Push a model
+  to the device with `adb` or download it into app storage, then store only the
+  model path/config in app settings.
+- Validate output with the same Zod `ExtractItemsResponse` shape before creating
+  suggestions.
+
+References for the spike:
+
+- Google AI Edge MediaPipe LLM Inference Android guide:
+  https://developers.google.com/edge/mediapipe/solutions/genai/llm_inference/android
+- ONNX Runtime React Native docs:
+  https://onnxruntime.ai/docs/get-started/with-javascript/react-native.html
+- llama.cpp Android notes:
+  https://github.com/ggml-org/llama.cpp/blob/master/docs/android.md
+
 Endpoint:
 
 ```text
@@ -429,7 +461,7 @@ POST /api/extract-items
 Request:
 
 ```ts
-type ExtractionMode = 'mock' | 'local-desktop-vlm' | 'cloud-vlm';
+type ExtractionMode = 'mock' | 'on-device-vlm' | 'local-desktop-vlm' | 'cloud-vlm';
 
 type ExtractItemsRequest = {
   boxId: string;
@@ -472,8 +504,10 @@ Validation rules:
 
 - Mobile side rejects jobs where selected photos belong to different boxes.
 - Server validates request and response with Zod.
+- `on-device-vlm` runs inside the mobile app and must not be routed through the
+  extraction backend.
 - `local-desktop-vlm` requires `photos[]`; `photoIds` alone are not enough for
-  model extraction.
+  fallback model extraction.
 - Server rejects oversized or invalid image inputs once upload limits are
   implemented.
 
@@ -516,7 +550,8 @@ type LocalDesktopVlmResponse = {
 The backend validates this response and maps each item to an `ItemSuggestion`
 with a deterministic `local-vlm-{n}` id and `selectedByDefault: true`.
 - Invalid model output becomes job failure, not partially trusted catalog data.
-- `cloud-vlm` remains optional benchmark, not an MVP dependency.
+- `local-desktop-vlm` and `cloud-vlm` remain optional benchmarks, not MVP
+  dependencies.
 
 For local integration testing, `pnpm vlm:mock` starts a compatible mock service at
 `http://127.0.0.1:8788/extract`. It validates the same request contract and
@@ -624,7 +659,7 @@ Avoid:
 5. Add QR generation and `/qr/[boxId]` route.
 6. Add photo capture/gallery picker, compression, local file storage and thumbnails.
 7. Add mock extraction backend/client and review screen.
-8. Add `local-desktop-vlm` extractor behind the same contract.
+8. Add `on-device-vlm` extractor behind the same contract.
 9. Add evidence search UI with candidate boxes and photo thumbnails.
 10. Add AI eval fixture and Maestro flows.
 

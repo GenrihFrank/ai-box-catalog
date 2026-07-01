@@ -33,6 +33,12 @@ export function buildServer(config: ServerConfig = {}) {
       });
     }
 
+    if (parsedRequest.data.mode === 'on-device-vlm') {
+      return reply.status(400).send({
+        error: 'on-device-vlm mode runs on the mobile app, not the extraction backend'
+      });
+    }
+
     if (parsedRequest.data.mode === 'local-desktop-vlm' && !config.localDesktopVlmUrl) {
       return reply.status(501).send({
         error: 'LOCAL_DESKTOP_VLM_URL is required for local-desktop-vlm mode'

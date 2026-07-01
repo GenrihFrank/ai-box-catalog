@@ -29,6 +29,7 @@ describe('database migrations', () => {
     expect(initialSql).toContain('CREATE TABLE IF NOT EXISTS box_photos');
     expect(initialSql).toContain('CREATE TABLE IF NOT EXISTS extraction_jobs');
     expect(initialSql).toContain('CREATE TABLE IF NOT EXISTS item_suggestions');
+    expect(initialSql).toContain("'on-device-vlm'");
   });
 
   it('applies pending migrations and updates user_version', async () => {
