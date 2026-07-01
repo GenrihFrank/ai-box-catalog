@@ -22,6 +22,8 @@ Use this shape for implementation:
 
 - `pnpm install` installs dependencies.
 - `pnpm dev` starts Expo locally.
+- `pnpm vlm:mock` starts a local VLM-compatible mock at
+  `http://127.0.0.1:8788/extract`.
 - `pnpm backend:dev` starts the local extraction backend. Set
   `LOCAL_DESKTOP_VLM_URL` to enable `local-desktop-vlm` proxy mode.
   That local VLM endpoint must accept `{ boxId, photos }` and return `{ items }`.

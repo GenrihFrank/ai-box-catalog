@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "expo start",
     "backend:dev": "tsx src/server/index.ts",
+    "vlm:mock": "tsx src/server/localVlmMock.ts",
     "android": "expo start --android",
     "test": "vitest run",
     "test:e2e": "maestro test e2e",

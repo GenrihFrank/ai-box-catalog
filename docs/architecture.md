@@ -518,6 +518,11 @@ with a deterministic `local-vlm-{n}` id and `selectedByDefault: true`.
 - Invalid model output becomes job failure, not partially trusted catalog data.
 - `cloud-vlm` remains optional benchmark, not an MVP dependency.
 
+For local integration testing, `pnpm vlm:mock` starts a compatible mock service at
+`http://127.0.0.1:8788/extract`. It validates the same request contract and
+returns deterministic placeholder items, so the mobile-to-backend-to-VLM path can
+be tested before wiring a real model.
+
 ## 10. Search Architecture
 
 Search starts as deterministic local TypeScript logic, not embeddings or a remote
