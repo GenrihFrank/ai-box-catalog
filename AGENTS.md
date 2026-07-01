@@ -34,6 +34,9 @@ Use this shape for implementation:
 - `pnpm test:e2e` runs Maestro Android flows.
 - `pnpm typecheck` validates TypeScript.
 
+Native on-device AI lives in the local Expo module package
+`modules/ai-box-on-device-vlm`. It requires a native Android build, not Expo Go.
+
 ## Coding Style & Naming Conventions
 
 Use TypeScript throughout app and backend code. Prefer explicit types at module

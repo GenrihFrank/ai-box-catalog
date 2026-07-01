@@ -129,8 +129,8 @@ type ItemSuggestion = {
 - First adapter: `mock`, for UI and flow development without a model.
 - MVP adapter: `on-device-vlm`, where the phone runs the vision-language model
   locally and returns structured item suggestions without sending photos off-device.
-  React Native calls this through `NativeModules.AiBoxCatalogOnDeviceVlm` behind
-  the `extractItemsFromPhotos` adapter.
+  React Native calls this through the local Expo module package
+  `ai-box-on-device-vlm` behind the `extractItemsFromPhotos` adapter.
 - Fallback adapter: `local-desktop-vlm`, where the app sends compressed JPEG photos
   as base64 payloads to a local backend on the same network. This is a development
   fallback and quality benchmark, not the target MVP runtime.

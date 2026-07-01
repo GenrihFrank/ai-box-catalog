@@ -34,6 +34,7 @@
     "react-native-screens": "^4.25.2",
     "react-native-svg": "^15.15.5",
     "react-native-worklets": "^0.8.0",
+    "ai-box-on-device-vlm": "workspace:*",
     "zod": "^4.4.3"
   },
   "devDependencies": {

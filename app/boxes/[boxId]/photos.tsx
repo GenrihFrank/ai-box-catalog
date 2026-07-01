@@ -2,7 +2,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Link, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
-import { Image, NativeModules, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import {
   SqliteBoxPhotoRepository,
@@ -169,10 +169,12 @@ export default function BoxPhotosRoute() {
   }
 
   async function handleRunOnDeviceExtraction() {
+    const nativeModule = await loadOnDeviceVlmNativeModule();
+
     await runExtraction(
       'on-device-vlm',
       createOnDeviceVlmExtractItemsFromPhotos({
-        nativeModule: NativeModules.AiBoxCatalogOnDeviceVlm as OnDeviceVlmNativeModule | undefined
+        nativeModule
       })
     );
   }
@@ -334,6 +336,15 @@ export default function BoxPhotosRoute() {
 
 function createPhotoId(): string {
   return globalThis.crypto?.randomUUID?.() ?? `photo-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+async function loadOnDeviceVlmNativeModule(): Promise<OnDeviceVlmNativeModule | null> {
+  try {
+    const module = await import('ai-box-on-device-vlm');
+    return module.default;
+  } catch {
+    return null;
+  }
 }
 
 const styles = StyleSheet.create({
